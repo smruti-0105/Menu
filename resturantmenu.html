@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Digital Restaurant Menu</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f9;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1, h2 {
+      text-align: center;
+    }
+
+    .top-section {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    #menu {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: white;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .card img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 10px;
+    }
+
+    button {
+      background: #ff6b35;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 5px;
+    }
+
+    button:hover {
+      background: #e85a2a;
+    }
+
+    #cart {
+      background: white;
+      padding: 15px;
+      margin-top: 30px;
+      border-radius: 10px;
+    }
+
+    #countdown {
+      font-size: 20px;
+      font-weight: bold;
+      color: green;
+      text-align: center;
+      margin-top: 15px;
+    }
+
+  </style>
+</head>
+<body>
+
+<h1>🍴 Digital Restaurant Menu</h1>
+
+<div class="top-section">
+  <label>Select Table:</label>
+  <select id="tableNumber">
+    <option value="1">Table 1</option>
+    <option value="2">Table 2</option>
+    <option value="3">Table 3</option>
+  </select>
+  <button onclick="generateQR()">Generate QR</button>
+  <div id="qrcode"></div>
+</div>
+
+<h2>Menu</h2>
+<div id="menu"></div>
+
+<h2>Your Cart</h2>
+<div id="cart"></div>
+<h3 id="total"></h3>
+<h3 id="estimate"></h3>
+<button onclick="placeOrder()">Place Order</button>
+
+<div id="countdown"></div>
+
+<script>
+
+// Menu Data
+const menu = [
+  { id: 1, name: "Pizza", price: 250, prepTime: 5, image: "pepperoni-pizza-recipe-photos-tablefortwoblog-7.jpg" },
+  { id: 2, name: "Burger", price: 120, prepTime: 3, image: "images.jpg" },
+  { id: 3, name: "Pasta", price: 180, prepTime: 4, image: "red-sauce-pasta-1-500x500.webp" },
+  { id: 4, name: "Biryani", price: 280, prepTime: 6, image: "763x848_img1.png" }
+];
+
+let cart = [];
+
+// Display Menu
+function displayMenu() {
+  const menuDiv = document.getElementById("menu");
+  menuDiv.innerHTML = "";
+
+  menu.forEach(item => {
+    menuDiv.innerHTML += `
+      <div class="card">
+        <img src="${item.image}">
+        <h3>${item.name}</h3>
+        <p>₹${item.price}</p>
+        <p>Prep Time: ${item.prepTime} mins</p>
+        <button onclick="addToCart(${item.id})">Add to Cart</button>
+      </div>
+    `;
+  });
+}
+
+// Add to Cart
+function addToCart(id) {
+  const item = menu.find(m => m.id === id);
+  cart.push(item);
+  updateCart();
+}
+
+// Update Cart
+function updateCart() {
+  const cartDiv = document.getElementById("cart");
+  cartDiv.innerHTML = "";
+
+  let totalPrice = 0;
+  let totalPrep = 0;
+
+  cart.forEach(item => {
+    totalPrice += item.price;
+    totalPrep += item.prepTime;
+
+    cartDiv.innerHTML += `<p>${item.name} - ₹${item.price}</p>`;
+  });
+
+  document.getElementById("total").innerText = "Total Price: ₹" + totalPrice;
+  document.getElementById("estimate").innerText = 
+    "Estimated Preparation Time: " + totalPrep + " minutes";
+}
+
+// Place Order & Start Countdown
+function placeOrder() {
+  if(cart.length === 0){
+    alert("Cart is empty!");
+    return;
+  }
+
+  let totalPrep = cart.reduce((sum, item) => sum + item.prepTime, 0);
+  startCountdown(totalPrep * 60); // convert to seconds
+
+  cart = [];
+  updateCart();
+}
+
+// Countdown Timer
+function startCountdown(seconds) {
+  const countdownDiv = document.getElementById("countdown");
+
+  const timer = setInterval(() => {
+    let minutes = Math.floor(seconds / 60);
+    let secs = seconds % 60;
+
+    countdownDiv.innerText = 
+      "⏳ Order Ready In: " + minutes + "m " + secs + "s";
+
+    seconds--;
+
+    if(seconds < 0){
+      clearInterval(timer);
+      countdownDiv.innerText = "✅ Your Order is Ready!";
+    }
+
+  }, 1000);
+}
+
+function generateQR() {
+
+  const table = document.getElementById("tableNumber").value;
+
+  const url = "http://192.168.0.104:5500/index.html?table=" + table;
+  // Replace 192.168.0.104 with YOUR IPv4 address
+
+  document.getElementById("qrcode").innerHTML = "";
+
+  new QRCode(document.getElementById("qrcode"), {
+    text: url,
+    width: 200,
+    height: 200
+  });
+}
+displayMenu();
+
+</script>
+
+</body>
+</html>
